@@ -24,6 +24,29 @@ class ConvolutionalEncoder:
         self.rate = 1.0 / self.n  # Taux de codage
         self.memory = self.K - 1  # Longueur de la mémoire
         
+    def _apply_generator_polynomial(self, register, generator):
+        """
+        Applique un polynôme générateur au registre
+        
+        Paramètres:
+        -----------
+        register : numpy array
+            Registre à décalage
+        generator : int
+            Polynôme générateur en notation octale
+            
+        Retourne:
+        ---------
+        output_bit : int
+            Bit de sortie
+        """
+        output_bit = 0
+        gen_binary = bin(generator)[2:][::-1]  # Convertir en binaire et inverser
+        for i, g_bit in enumerate(gen_binary):
+            if i < self.K and g_bit == '1':
+                output_bit ^= register[i]
+        return output_bit
+    
     def encode(self, input_bits):
         """
         Encode une séquence de bits
@@ -55,12 +78,7 @@ class ConvolutionalEncoder:
             
             # Calculer les bits de sortie pour chaque polynôme générateur
             for gen in self.generators:
-                # Appliquer le polynôme générateur (opération AND bit à bit puis XOR)
-                output_bit = 0
-                gen_binary = bin(gen)[2:][::-1]  # Convertir en binaire et inverser
-                for i, g_bit in enumerate(gen_binary):
-                    if i < self.K and g_bit == '1':
-                        output_bit ^= register[i]
+                output_bit = self._apply_generator_polynomial(register, gen)
                 output_bits.append(output_bit)
         
         # Ajouter les bits de terminaison (flush)
@@ -69,11 +87,7 @@ class ConvolutionalEncoder:
             register[0] = 0
             
             for gen in self.generators:
-                output_bit = 0
-                gen_binary = bin(gen)[2:][::-1]
-                for i, g_bit in enumerate(gen_binary):
-                    if i < self.K and g_bit == '1':
-                        output_bit ^= register[i]
+                output_bit = self._apply_generator_polynomial(register, gen)
                 output_bits.append(output_bit)
         
         return np.array(output_bits, dtype=int)
@@ -110,11 +124,7 @@ class ConvolutionalEncoder:
         # Calculer la sortie
         output = []
         for gen in self.generators:
-            output_bit = 0
-            gen_binary = bin(gen)[2:][::-1]
-            for i, g_bit in enumerate(gen_binary):
-                if i < self.K and g_bit == '1':
-                    output_bit ^= register[i]
+            output_bit = self._apply_generator_polynomial(register, gen)
             output.append(output_bit)
         
         # Calculer l'état suivant

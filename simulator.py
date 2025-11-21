@@ -22,6 +22,28 @@ class ConvolutionalCodeSimulator:
     def __init__(self, encoder, decoder):
         self.encoder = encoder
         self.decoder = decoder
+    
+    def _count_bit_errors(self, original_bits, decoded_bits):
+        """
+        Compte les erreurs de bits entre deux séquences
+        
+        Paramètres:
+        -----------
+        original_bits : array-like
+            Bits originaux
+        decoded_bits : array-like
+            Bits décodés
+            
+        Retourne:
+        ---------
+        errors : int
+            Nombre d'erreurs
+        min_len : int
+            Longueur minimale comparée
+        """
+        min_len = min(len(original_bits), len(decoded_bits))
+        errors = np.sum(original_bits[:min_len] != decoded_bits[:min_len])
+        return errors, min_len
         
     def add_awgn_noise(self, signal, snr_db):
         """
@@ -127,8 +149,7 @@ class ConvolutionalCodeSimulator:
                     decoded_bits = self.decoder.decode(hard_bits)
                 
                 # Compter les erreurs (codé)
-                min_len = min(len(data_bits), len(decoded_bits))
-                errors_coded = np.sum(data_bits[:min_len] != decoded_bits[:min_len])
+                errors_coded, min_len = self._count_bit_errors(data_bits, decoded_bits)
                 total_errors_coded += errors_coded
                 
                 # Erreurs non codées (pour comparaison)
@@ -184,8 +205,7 @@ class ConvolutionalCodeSimulator:
             decoded_bits = self.decoder.decode(hard_bits)
         
         # Calculer les erreurs
-        min_len = min(len(data_bits), len(decoded_bits))
-        bit_errors = np.sum(data_bits[:min_len] != decoded_bits[:min_len])
+        bit_errors, min_len = self._count_bit_errors(data_bits, decoded_bits)
         ber = bit_errors / min_len if min_len > 0 else 0
         
         return {

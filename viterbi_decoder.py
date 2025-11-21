@@ -23,6 +23,38 @@ class ViterbiDecoder:
         """Calcule la distance de Hamming entre deux séquences"""
         return np.sum(np.array(seq1) != np.array(seq2))
     
+    def _reconstruct_bits_from_path(self, path):
+        """
+        Reconstruit les bits d'entrée à partir d'un chemin d'états
+        
+        Paramètres:
+        -----------
+        path : list
+            Séquence d'états
+            
+        Retourne:
+        ---------
+        decoded_bits : list
+            Séquence de bits décodés
+        """
+        decoded_bits = []
+        for i in range(len(path) - 1):
+            current_state = path[i]
+            next_state = path[i + 1]
+            
+            # Déterminer quel bit d'entrée a causé cette transition
+            for input_bit in [0, 1]:
+                test_next_state, _ = self.encoder.get_next_state(current_state, input_bit)
+                if test_next_state == next_state:
+                    decoded_bits.append(input_bit)
+                    break
+        
+        # Retirer les bits de terminaison
+        if len(decoded_bits) > self.encoder.memory:
+            decoded_bits = decoded_bits[:-self.encoder.memory]
+        
+        return decoded_bits
+    
     def decode(self, received_bits):
         """
         Décode une séquence reçue avec l'algorithme de Viterbi
@@ -91,21 +123,7 @@ class ViterbiDecoder:
         best_path = paths[best_state]
         
         # Reconstruire les bits d'entrée à partir du chemin
-        decoded_bits = []
-        for i in range(len(best_path) - 1):
-            current_state = best_path[i]
-            next_state = best_path[i + 1]
-            
-            # Déterminer quel bit d'entrée a causé cette transition
-            for input_bit in [0, 1]:
-                test_next_state, _ = self.encoder.get_next_state(current_state, input_bit)
-                if test_next_state == next_state:
-                    decoded_bits.append(input_bit)
-                    break
-        
-        # Retirer les bits de terminaison
-        if len(decoded_bits) > self.encoder.memory:
-            decoded_bits = decoded_bits[:-self.encoder.memory]
+        decoded_bits = self._reconstruct_bits_from_path(best_path)
         
         return np.array(decoded_bits, dtype=int)
     
@@ -171,18 +189,6 @@ class ViterbiDecoder:
         best_path = paths[best_state]
         
         # Reconstruire les bits
-        decoded_bits = []
-        for i in range(len(best_path) - 1):
-            current_state = best_path[i]
-            next_state = best_path[i + 1]
-            
-            for input_bit in [0, 1]:
-                test_next_state, _ = self.encoder.get_next_state(current_state, input_bit)
-                if test_next_state == next_state:
-                    decoded_bits.append(input_bit)
-                    break
-        
-        if len(decoded_bits) > self.encoder.memory:
-            decoded_bits = decoded_bits[:-self.encoder.memory]
+        decoded_bits = self._reconstruct_bits_from_path(best_path)
         
         return np.array(decoded_bits, dtype=int)
