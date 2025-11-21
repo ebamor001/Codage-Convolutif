@@ -43,11 +43,18 @@ class ViterbiDecoder:
             next_state = path[i + 1]
             
             # Déterminer quel bit d'entrée a causé cette transition
+            bit_found = False
             for input_bit in [0, 1]:
                 test_next_state, _ = self.encoder.get_next_state(current_state, input_bit)
                 if test_next_state == next_state:
                     decoded_bits.append(input_bit)
+                    bit_found = True
                     break
+            
+            # Ceci ne devrait jamais arriver avec un chemin valide
+            if not bit_found:
+                # En cas d'erreur, ajouter 0 par défaut
+                decoded_bits.append(0)
         
         # Retirer les bits de terminaison
         if len(decoded_bits) > self.encoder.memory:

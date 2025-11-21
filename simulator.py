@@ -128,7 +128,8 @@ class ConvolutionalCodeSimulator:
         for snr_db in snr_db_range:
             total_errors_coded = 0
             total_errors_uncoded = 0
-            total_bits = 0
+            total_bits_coded = 0
+            total_bits_uncoded = 0
             
             for _ in range(num_blocks):
                 # Générer des bits aléatoires
@@ -151,18 +152,18 @@ class ConvolutionalCodeSimulator:
                 # Compter les erreurs (codé)
                 errors_coded, min_len = self._count_bit_errors(data_bits, decoded_bits)
                 total_errors_coded += errors_coded
+                total_bits_coded += min_len
                 
                 # Erreurs non codées (pour comparaison)
                 noisy_data = self.add_awgn_noise(data_bits, snr_db)
                 uncoded_bits = (noisy_data > 0).astype(int)
                 errors_uncoded = np.sum(data_bits != uncoded_bits)
                 total_errors_uncoded += errors_uncoded
-                
-                total_bits += min_len
+                total_bits_uncoded += len(data_bits)
             
             # Calculer les BER
-            ber_coded.append(total_errors_coded / total_bits if total_bits > 0 else 0)
-            ber_uncoded.append(total_errors_uncoded / (num_blocks * block_length))
+            ber_coded.append(total_errors_coded / total_bits_coded if total_bits_coded > 0 else 0)
+            ber_uncoded.append(total_errors_uncoded / total_bits_uncoded if total_bits_uncoded > 0 else 0)
         
         return {
             'snr_db': snr_db_range,
