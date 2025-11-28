@@ -22,7 +22,9 @@ EsN0    = R*log2(M)*EbN0; % Points de EsN0 =EbN0 pour BPSK
 sigmaz2 = 1./(2 * EsN0);  % Variance de bruit pour chaque EbN0
 
 % Codes à étudier (octal)
-codes = { [2 3], [5 7], [13 15], [133 171] };
+%codes = { [2 3], [5 7], [13 15], [133 171] };
+codes = { [5 7], [1 5 7], [13 15], [1 13 15] };
+
 Ncodes = length(codes);
 
 % Initialisation des vecteurs de résultats
